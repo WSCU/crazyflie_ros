@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Crazyflie PC client
 
 The Crazyflie PC client enables flashing and controlling the Crazyflie.
@@ -170,3 +171,9 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="7777", MODE="0664"
 
 Restart the computer and you are now able to access the USB radio dongle
 without being root.
+=======
+crazyflie_ros
+=============
+
+crazyflie client for ros
+>>>>>>> 6b3038928e38136bb55c0653ce47a49e7bc41de2
