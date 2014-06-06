@@ -63,9 +63,10 @@ flight_tab_class = uic.loadUiType(sys.path[0] +
 
 MAX_THRUST = 65365.0
 
+class Data: pass
+D = Data()
 
 class FlightTab(Tab, flight_tab_class):
-
     uiSetupReadySignal = pyqtSignal()
     _accel_data_signal = pyqtSignal(int, object, object)
     _gyro_data_signal = pyqtSignal(int, object, object)
@@ -86,11 +87,18 @@ class FlightTab(Tab, flight_tab_class):
     disconnectedSignal = pyqtSignal(str)
 
     def __init__(self, tabWidget, helper, *args):
+        global D
+        D.thrust = 0
+        D.pitch = 0
+        D.yawrate = 0
+        D.roll = 0
         rospy.init_node("cf_flightTab")
         self.motor_pub = rospy.Publisher("cf_motorData", MotorData)
         self.stab_pub = rospy.Publisher("cf_stabData", StabData)
         self.acc_pub = rospy.Publisher("cf_accData", AccelData)
         self.gyro_pub = rospy.Publisher("cf_gyroData", GyroData)
+        rospy.Subscriber("cf_textcmd", String, self._cmdCB)
+        
         
         super(FlightTab, self).__init__(*args)
         self.setupUi(self)
@@ -204,6 +212,28 @@ class FlightTab(Tab, flight_tab_class):
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error", "Error when starting log config"
                 " [%s]: %s" % (log_conf.name, msg))
+    
+    def _cmdCB(self, data):
+        m = data.data
+        print ("Recieved command: " + m)
+        if m is 'q':
+            self.helper.cf.commander.send_setpoint(0, 0, 0, 0)
+        elif m.count(" ")>0:
+            hpr,value=m.split(" ")
+            if(hpr is "pitch" or hpr is "p"):
+                D.pitch= float(value)
+            if(hpr=="yawrate" or hpr is "y"):
+                D.yawrate= float(value)
+            if(hpr=="roll" or hpr is "r"):
+                D.roll=float(value)
+            if(hpr=="thrust" or hpr is "t"):
+                D.thrust= int(value)
+            print (D.thrust)
+            if D.thrust <= 10000:
+                D.thrust = 10001
+            elif D.thrust > 60000:
+                D.thrust = 60000
+            self.helper.cf.commander.send_setpoint(D.roll, D.pitch, D.yawrate, D.thrust)
 
     def _motor_data_received(self, timestamp, data, logconf):
         if self.isVisible():
@@ -220,7 +250,6 @@ class FlightTab(Tab, flight_tab_class):
 
     def _gyro_data_received(self, timestamp, data, logconf):
         if self.isVisible():
-             print("gyro CB hello")
              d = GyroData()
              d.x = data["gyro.x"]
              d.y = data["gyro.y"]

@@ -448,6 +448,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._statusbar_label.setText("Using [%s] with config [%s]" % (
                                       self._active_device,
                                       self._current_input_config))
+        self.joystickReader.stop_input()
 
     def _inputconfig_selected(self, checked):
         if (not checked):
